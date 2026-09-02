@@ -1,6 +1,6 @@
-# [Project name]
+# AutoBeat
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+AutoBeat is a private, offline-first music player for local audio folders with headphone-aware playback.
 
 ## Run & Operate
 
@@ -22,23 +22,29 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+The AutoBeat frontend lives in `artifacts/autobeat/src`, with `App.tsx` as the source of truth for local playback and `index.css` for visual tokens.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first MVP is frontend-only and keeps track metadata, settings, and playback position in localStorage.
+- Local audio bytes are never uploaded or copied into the project; selected `File` objects are held in memory for playback.
+- Browser `mediaDevices` output events provide best-effort headphone awareness; native Windows startup, tray, and device APIs belong in the future desktop shell.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Browse a local folder and recursively index MP3, WAV, M4A, and FLAC files.
+- Search and filter tracks by filename-derived name and category.
+- Play, pause, stop, skip, adjust volume, shuffle, and cycle repeat modes.
+- Choose a default track and configure startup, resume, headphone autoplay, and disconnect behavior.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Personal use only; no accounts, subscriptions, streaming providers, or cloud music.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Browser security prevents reliable system-wide Windows headphone detection and automatic startup; the settings screen explains this boundary.
+- `File` objects are not serializable, so after a browser reload a previously indexed track must be selected again before it can play.
 
 ## Pointers
 

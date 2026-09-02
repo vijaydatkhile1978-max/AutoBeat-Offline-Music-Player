@@ -1,0 +1,1 @@
+- [Offline file access](offline-file-access.md) — browser-selected audio bytes stay session-scoped; persisted metadata cannot restore playable File objects after reload.

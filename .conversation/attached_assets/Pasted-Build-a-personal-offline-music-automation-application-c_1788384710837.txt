@@ -1,0 +1,252 @@
+Build a personal offline music automation application called **AutoBeat** for my own laptop and later mobile phone.
+
+## Core Goal
+
+The application should automatically detect when headphones/earphones are connected to my device and immediately start playing my downloaded audio files.
+
+This is a completely personal application. It does not need Spotify integration, streaming, accounts, subscriptions, or online music.
+
+## Audio Source
+
+I will provide a configurable local folder path where my downloaded audio files are stored.
+
+Example:
+
+`C:\Users\Username\Music\Beats`
+
+The application must:
+
+* Scan this folder and its subfolders.
+* Detect supported audio files such as MP3, WAV, M4A, and FLAC.
+* Use the filename as the initial track name.
+* Build a local music library/index.
+* Automatically update when new audio files are added.
+
+Example filenames:
+
+* `Interstellar Beat.mp3`
+* `Focus Beat.wav`
+* `Workout Song.mp3`
+
+## Main Automation
+
+The primary behavior should be:
+
+1. The laptop starts.
+2. The AutoBeat application runs automatically in the background.
+3. The application detects when headphones or earphones are connected.
+4. When headphones are detected, AutoBeat automatically starts playing a default beat or the last selected beat.
+5. The audio should play continuously on loop.
+6. If headphones are disconnected, pause or stop playback.
+7. When headphones are connected again, resume playback.
+
+## Playback Features
+
+Implement:
+
+* Play
+* Pause
+* Stop
+* Next track
+* Previous track
+* Volume control
+* Repeat one track
+* Repeat playlist
+* Shuffle
+* Resume last played position
+* Remember the last selected beat
+
+Default behavior:
+
+If no specific track is selected, play the user's configured default beat continuously on loop.
+
+## Library Organization
+
+Create categories so I can later organize audio into:
+
+* Beats
+* Songs
+* Focus
+* Workout
+* Chill
+* Custom playlists
+
+Initially, use a simple metadata system or folders to determine categories.
+
+For example:
+
+`Music/Beats/`
+
+`Music/Songs/`
+
+`Music/Focus/`
+
+The application should not require an internet connection.
+
+## Track Selection
+
+I should be able to search and select tracks by name.
+
+For example:
+
+* Search: `Interstellar`
+* Result: `Interstellar Beat.mp3`
+* Play that track.
+
+Design the architecture so voice commands can be added later.
+
+Future examples:
+
+* "Play Interstellar Beat"
+* "Play focus music"
+* "Play my workout playlist"
+* "Stop music"
+
+For now, implement text search and manual selection first.
+
+## Headphone Detection
+
+This is a critical feature.
+
+The application must monitor system audio devices and detect:
+
+* Headphones connected
+* Headphones disconnected
+* Default audio output device changed
+
+When the output device changes to headphones/earphones, trigger the automatic playback logic.
+
+Avoid repeatedly restarting the same track if the device detection fires multiple events.
+
+Use a debounce/state system.
+
+Example:
+
+```text
+Headphones connected
+↓
+Check if music is already playing
+↓
+If not playing → Start default/last selected beat
+↓
+Loop continuously
+```
+
+## User Interface
+
+Create a minimal, clean personal music player UI.
+
+Include:
+
+* Current playing track
+* Play/Pause button
+* Next/Previous
+* Volume slider
+* Repeat toggle
+* Search bar
+* Music library
+* Category selection
+* Settings page
+
+Settings should include:
+
+* Audio folder path
+* Default beat
+* Start automatically on laptop startup
+* Auto-play when headphones connect
+* Pause when headphones disconnect
+* Resume last track
+
+## Background Mode
+
+The application should support running silently in the background.
+
+Add a system tray icon with:
+
+* Play/Pause
+* Current track
+* Next
+* Stop
+* Open AutoBeat
+* Exit
+
+The application should optionally launch automatically when Windows starts.
+
+## Technical Requirements
+
+Prioritize building a working prototype quickly.
+
+Use a technology stack suitable for Windows desktop development and local system access.
+
+Recommended approach:
+
+* Frontend/Desktop UI: Electron or Tauri
+* Backend logic: Node.js/Python/Rust depending on hardware integration requirements
+* Local database: SQLite or JSON for settings and music metadata
+* Audio playback: Reliable local audio playback library
+* Windows audio device monitoring: Native Windows APIs or reliable system libraries
+
+The architecture must be modular so Android/mobile support can be added later.
+
+## Important Constraints
+
+* Personal use only.
+* Offline-first.
+* No cloud required.
+* No Spotify API.
+* No streaming service dependency.
+* All audio comes from local folders on my device.
+* The app should only index files; it should not modify or move my original music files.
+
+## Development Priority
+
+Build the MVP in this order:
+
+### Phase 1 — Must Work
+
+1. Select local music folder.
+2. Scan and list audio files.
+3. Play selected audio.
+4. Loop audio.
+5. Select default beat.
+6. Remember settings.
+
+### Phase 2 — Automation
+
+7. Detect headphones connected.
+8. Automatically start the default/last beat.
+9. Detect headphones disconnected.
+10. Pause/stop playback.
+11. Run in background.
+
+### Phase 3 — Better Experience
+
+12. System tray controls.
+13. Auto-start with Windows.
+14. Categories and playlists.
+15. Search tracks.
+
+### Phase 4 — Future AI Features
+
+16. Voice commands.
+17. Natural language track selection.
+18. AI assistant integration.
+19. Mobile companion application.
+
+## Deliverable
+
+Create a fully working Windows MVP first.
+
+Before writing the entire application, first:
+
+1. Analyze the best technology stack for reliable headphone detection on Windows.
+2. Create the project architecture.
+3. Build the MVP step by step.
+4. Test local folder scanning.
+5. Test audio playback and looping.
+6. Test headphone connection detection.
+7. Only then add UI polish.
+
+The main success condition is:
+
+**When I connect my earphones/headphones to my laptop, my selected default beat automatically starts playing from my local downloaded music folder and continues looping until I stop it or disconnect the headphones.**

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AutoBeat"
+description = "A personal offline music automation player for local audio folders, with playlist playback, remembered preferences, and headphone-aware auto-play behavior."
+version = "1.0.0"
+id = "artifacts/autobeat"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23637
+
+[services.development]
+run = "pnpm --filter @workspace/autobeat run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/autobeat", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/autobeat/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23637"
+BASE_PATH = "/"
