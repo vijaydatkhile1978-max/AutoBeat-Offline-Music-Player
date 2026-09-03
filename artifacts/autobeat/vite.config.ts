@@ -10,7 +10,7 @@ export default defineConfig({
     host: true,
   },
   build: {
-    outDir: 'dist/public',
+    outDir: 'dist',
     sourcemap: false,
     emptyOutDir: true,
   },
