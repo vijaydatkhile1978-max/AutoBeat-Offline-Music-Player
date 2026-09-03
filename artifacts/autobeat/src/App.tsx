@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { getFolderHandle, saveFolderHandle } from './lib/storage';
 
 type Category = 'All tracks' | 'Hip-hop' | 'Beats' | 'Music' | 'Vocals' | 'Marathi playlists' | 'Soft music' | 'Personal playlist' | 'New files';
 type RepeatMode = 'off' | 'one' | 'all';
@@ -74,6 +75,10 @@ type Playback = {
   shuffle: boolean;
 };
 type AudioStatus = 'unknown' | 'system' | 'headphones' | 'unsupported';
+type PersistedDirectoryHandle = FileSystemDirectoryHandle & {
+  queryPermission: (descriptor: { mode: 'read' }) => Promise<PermissionState>;
+  requestPermission: (descriptor: { mode: 'read' }) => Promise<PermissionState>;
+};
 
 const queryClient = new QueryClient();
 const DEMO_TRACKS: Track[] = [
@@ -235,7 +240,7 @@ function usePlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrl = useRef('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const directoryHandleRef = useRef<any>(null);
+  const directoryHandleRef = useRef<PersistedDirectoryHandle | null>(null);
   const tracksRef = useRef(tracks);
   const playTrackRef = useRef<(track: Track, fromQueue?: boolean) => void>(() => undefined);
   const settingsRef = useRef(settings);
@@ -359,11 +364,12 @@ function usePlayer() {
     }
   }
   async function chooseFolder() {
-    const picker = (window as Window & { showDirectoryPicker?: () => Promise<any> }).showDirectoryPicker;
+    const picker = (window as Window & { showDirectoryPicker?: () => Promise<PersistedDirectoryHandle> }).showDirectoryPicker;
     if (picker) {
       try {
         const handle = await picker();
         directoryHandleRef.current = handle;
+        await saveFolderHandle(handle);
         await scanFiles(await readDirectory(handle));
       } catch (error) { if ((error as Error).name !== 'AbortError') setNotice('This folder could not be opened. Try selecting it again.'); }
     } else {
@@ -372,11 +378,30 @@ function usePlayer() {
     }
   }
   useEffect(() => {
+    let disposed = false;
+    async function restoreFolder() {
+      try {
+        const handle = await getFolderHandle() as PersistedDirectoryHandle | null;
+        if (!handle || disposed) return;
+        const permission = await handle.queryPermission({ mode: 'read' });
+        if (permission === 'denied') return;
+        if (permission !== 'granted' && await handle.requestPermission({ mode: 'read' }) !== 'granted') return;
+        directoryHandleRef.current = handle;
+        await scanFiles(await readDirectory(handle), true);
+      } catch {
+        // A stored handle can become unavailable if the folder was moved or deleted.
+      }
+    }
+    void restoreFolder();
+    return () => { disposed = true; };
+    // Folder restoration runs once when the player starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
     const interval = window.setInterval(() => { void refreshDirectory(); }, 15000);
     const onVisible = () => { if (document.visibilityState === 'visible') void refreshDirectory(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => { window.clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
-    // The directory handle is intentionally kept in memory for this session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
