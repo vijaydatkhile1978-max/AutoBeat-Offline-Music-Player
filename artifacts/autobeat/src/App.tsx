@@ -146,7 +146,7 @@ function AppShell({ children, currentTrack, isPlaying, player }: { children: Rea
     { href: '/settings', label: 'Settings', icon: Settings2 },
   ];
   return (
-    <div className={`app-noise min-h-[100dvh] bg-background text-foreground ${player.theme === 'dark' ? 'dark' : player.theme === 'party' ? 'party' : ''}`}>
+    <div className={`app-noise min-h-[100dvh] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-foreground ${player.theme === 'dark' ? 'dark' : player.theme === 'party' ? 'party' : ''}`}>
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-[250px] flex-col border-r border-border bg-card/95 px-5 py-6 backdrop-blur-xl transition-transform md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between">
           <Link href="/" data-testid="link-logo" className="flex items-center gap-3 text-foreground no-underline">

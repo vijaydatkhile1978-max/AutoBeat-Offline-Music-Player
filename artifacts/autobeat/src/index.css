@@ -35,27 +35,27 @@
 }
 
 :root {
-  --background: 34 30% 96%;
-  --foreground: 224 31% 18%;
-  --border: 36 22% 86%;
-  --input: 36 22% 86%;
-  --ring: 172 50% 39%;
-  --card: 38 35% 98%;
-  --card-foreground: 224 31% 18%;
-  --card-border: 36 22% 88%;
-  --popover: 38 35% 98%;
-  --popover-foreground: 224 31% 18%;
-  --popover-border: 36 22% 86%;
-  --primary: 172 47% 35%;
-  --primary-foreground: 40 40% 97%;
-  --secondary: 34 28% 91%;
-  --secondary-foreground: 225 26% 25%;
-  --muted: 35 21% 91%;
-  --muted-foreground: 222 14% 47%;
-  --accent: 19 69% 62%;
-  --accent-foreground: 225 26% 20%;
-  --destructive: 3 60% 50%;
-  --destructive-foreground: 40 40% 97%;
+  --background: 242 48% 12%;
+  --foreground: 220 40% 96%;
+  --border: 226 35% 35%;
+  --input: 226 35% 35%;
+  --ring: 190 90% 65%;
+  --card: 232 42% 20%;
+  --card-foreground: 220 40% 96%;
+  --card-border: 226 35% 35%;
+  --popover: 232 42% 20%;
+  --popover-foreground: 220 40% 96%;
+  --popover-border: 226 35% 35%;
+  --primary: 190 90% 65%;
+  --primary-foreground: 242 48% 12%;
+  --secondary: 237 35% 27%;
+  --secondary-foreground: 220 40% 96%;
+  --muted: 237 35% 27%;
+  --muted-foreground: 220 20% 75%;
+  --accent: 274 90% 72%;
+  --accent-foreground: 242 48% 12%;
+  --destructive: 3 65% 58%;
+  --destructive-foreground: 220 40% 96%;
   --radius: 1rem;
   --app-font-sans: 'Manrope', sans-serif;
   --app-font-mono: 'DM Mono', monospace;
@@ -116,10 +116,25 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100dvh;
-  background: hsl(var(--background));
+  background: linear-gradient(135deg, #32135f 0%, #123f78 52%, #1f2370 100%);
   color: hsl(var(--foreground));
   font-family: var(--app-font-sans);
   -webkit-font-smoothing: antialiased;
+}
+.app-noise {
+  background: linear-gradient(135deg, #32135f 0%, #123f78 52%, #1f2370 100%);
+}
+.app-noise .bg-card,
+.app-noise .bg-card\/95 {
+  background-color: hsl(var(--card) / .68);
+  border-color: hsl(var(--border) / .7);
+  backdrop-filter: blur(20px);
+}
+.app-noise .bg-secondary,
+.app-noise .bg-secondary\/55,
+.app-noise .bg-secondary\/60 {
+  background-color: hsl(var(--secondary) / .58);
+  backdrop-filter: blur(16px);
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
