@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type Dispatch, type MutableRefObject, type ReactNode, type SetStateAction } from 'react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -23,6 +23,7 @@ import {
   Radio,
   Repeat,
   RotateCcw,
+  RotateCw,
   Search,
   Settings2,
   Shuffle,
@@ -259,7 +260,7 @@ function usePlayer() {
     const audio = new Audio();
     audio.volume = playback.volume;
     audioRef.current = audio;
-    const sync = () => setPlayback((p) => ({ ...p, currentTime: audio.currentTime }));
+    const sync = () => { playbackRef.current.currentTime = audio.currentTime; };
     const ended = () => setPlayback((p) => {
       if (p.repeatMode === 'one') { audio.currentTime = 0; void audio.play(); return { ...p, isPlaying: true, currentTime: 0 }; }
       const available = tracksRef.current.filter((t) => !t.demo);
@@ -297,7 +298,7 @@ function usePlayer() {
     if (!currentTrack) return;
     if (currentTrack.demo) { playTrack(currentTrack); return; }
     const audio = audioRef.current!;
-    if (playback.isPlaying) { audio.pause(); setPlayback((p) => ({ ...p, isPlaying: false })); }
+    if (playback.isPlaying) { audio.pause(); setPlayback((p) => ({ ...p, isPlaying: false, currentTime: audio.currentTime })); }
     else { void audio.play(); setPlayback((p) => ({ ...p, isPlaying: true })); }
   }
   function stop() { audioRef.current?.pause(); if (audioRef.current) audioRef.current.currentTime = 0; setPlayback((p) => ({ ...p, isPlaying: false, currentTime: 0 })); }
@@ -487,8 +488,54 @@ function usePlayer() {
   function updateTrack(id: string, changes: Partial<Track>) {
     setTracks((items) => items.map((track) => track.id === id ? { ...track, ...changes } : track));
   }
-  return { tracks, settings, playback, currentTrack, audioStatus, callStatus, theme, setTheme, notice, fileInputRef, playTrack, togglePlay, stop, step, setVolume, chooseFolder, scanFiles, setSetting, setPlayback, setNotice, updateTrack };
+  return { tracks, settings, playback, currentTrack, audioStatus, callStatus, theme, setTheme, notice, fileInputRef, audioRef, playTrack, togglePlay, stop, step, setVolume, chooseFolder, scanFiles, setSetting, setPlayback, setNotice, updateTrack };
 }
+
+const ProgressControls = memo(function ProgressControls({ audioRef, trackId, fallbackDuration, setPlayback }: {
+  audioRef: MutableRefObject<HTMLAudioElement | null>;
+  trackId?: string;
+  fallbackDuration?: number;
+  setPlayback: Dispatch<SetStateAction<Playback>>;
+}) {
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(fallbackDuration || 0);
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const sync = () => {
+      setCurrentTime(audio.currentTime || 0);
+      setDuration(Number.isFinite(audio.duration) ? audio.duration : fallbackDuration || 0);
+    };
+    sync();
+    audio.addEventListener('timeupdate', sync);
+    audio.addEventListener('loadedmetadata', sync);
+    audio.addEventListener('durationchange', sync);
+    return () => {
+      audio.removeEventListener('timeupdate', sync);
+      audio.removeEventListener('loadedmetadata', sync);
+      audio.removeEventListener('durationchange', sync);
+    };
+  }, [audioRef, trackId, fallbackDuration]);
+  const changeTime = (nextTime: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(nextTime)) return;
+    const next = Math.max(0, Math.min(nextTime, duration || nextTime));
+    audio.currentTime = next;
+    setCurrentTime(next);
+    setPlayback((playback) => ({ ...playback, currentTime: next }));
+  };
+  return <div className="mt-8 rounded-2xl border border-border bg-secondary/45 p-4" data-testid="playback-progress-controls">
+    <div className="flex items-center gap-3">
+      <span className="w-10 font-mono-custom text-[10px] text-muted-foreground">{formatTime(currentTime)}</span>
+      <input className="range-teal h-1.5 min-w-0 flex-1" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || currentTime)} onChange={(event) => changeTime(Number(event.target.value))} disabled={!duration} aria-label="Track progress" data-testid="input-track-progress" />
+      <span className="w-10 text-right font-mono-custom text-[10px] text-muted-foreground">{formatTime(duration)}</span>
+    </div>
+    <div className="mt-3 flex items-center justify-center gap-4">
+      <button onClick={() => changeTime(currentTime - 10)} className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Backward 10 seconds" data-testid="button-seek-backward"><RotateCcw size={14} /> 10</button>
+      <button onClick={() => changeTime(currentTime + 10)} className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Forward 10 seconds" data-testid="button-seek-forward">10 <RotateCw size={14} /></button>
+    </div>
+  </div>;
+}, (previous, next) => previous.trackId === next.trackId && previous.fallbackDuration === next.fallbackDuration);
 
 function PlayerControls({ player, compact = false }: { player: ReturnType<typeof usePlayer>; compact?: boolean }) {
   const { playback, currentTrack } = player;
@@ -541,6 +588,7 @@ function HomePage({ player }: { player: ReturnType<typeof usePlayer> }) {
           <div className="absolute bottom-5 left-5 right-5"><p className="truncate text-center font-display text-[16px] font-bold">{player.currentTrack?.name || 'Choose your first track'}</p><p className="mt-1 text-center font-mono-custom text-[9px] uppercase tracking-wider text-muted-foreground">{player.currentTrack?.demo ? 'A small preview, not a playable file' : player.currentTrack?.category || 'Local audio'}</p></div>
         </div>
       </div>
+      <div className="mx-auto mt-6 max-w-[560px]"><ProgressControls audioRef={player.audioRef} trackId={player.currentTrack?.id} fallbackDuration={player.currentTrack?.duration} setPlayback={player.setPlayback} /><div className="mt-5 flex justify-center"><PlayerControls player={player} /></div></div>
     </section>
     <section className="mt-10 grid gap-7 lg:grid-cols-[1.15fr_.85fr]">
       <div className="rounded-[24px] border border-border bg-card p-5 md:p-7"><div className="mb-5 flex items-end justify-between"><div><SectionEyebrow>In the room</SectionEyebrow><h2 className="font-display text-2xl font-bold tracking-[-.04em]">Ready when you are</h2></div><Link href="/library" className="text-[11px] font-bold text-primary no-underline" data-testid="link-see-all-tracks">See all <ChevronRight className="inline" size={13} /></Link></div>{recentlyPlayed.length ? recentlyPlayed.map((track) => <TrackRow key={track.id} track={track} active={track.id === player.playback.currentTrackId} isPlaying={player.playback.isPlaying} onPlay={() => player.playTrack(track)} onDefault={() => player.setSetting('defaultTrackId', track.id)} />) : <div className="rounded-2xl border border-dashed border-border bg-secondary/40 px-5 py-8 text-center"><Sparkles className="mx-auto mb-3 text-accent" size={22} /><p className="text-[13px] font-bold">Your room is quiet for now.</p><p className="mx-auto mt-2 max-w-[260px] text-[11px] leading-5 text-muted-foreground">Choose a local audio folder and your recent tracks will settle here.</p><Link href="/settings" className="mt-4 inline-flex rounded-lg bg-foreground px-3 py-2 text-[11px] font-bold text-background no-underline" data-testid="link-choose-folder-empty">Choose a folder</Link></div>}</div>
